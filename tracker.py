@@ -1,6 +1,4 @@
 import aiohttp
-import os
-import yarl
 import urllib.parse as urlparse
 
 from peer import Peer
@@ -18,12 +16,6 @@ def parse_peers_list(data):
         return list(map(Peer.from_dict, data))
 
 
-def peer_id():
-    pid_str = str(os.getpid())
-    peer_id = "-hk0001-" + pid_str * (20 // len(pid_str))
-    return peer_id[:20]
-
-
 class Tracker:
     """
     Holds the information about tracker and the peer list from tracker.
@@ -38,15 +30,11 @@ class Tracker:
         self.tracker_url = torrent.announce_list[0]  ##
         self._download_info = torrent.download_info
         self._peers = None
-        self._my_peer_id = peer_id()
+        self._my_peer_id = torrent.my_peer_id
 
     @property
     def peers(self):
         return self._peers
-
-    @property
-    def my_peer_id(self):
-        return self._my_peer_id
 
     def handle_response(self, response):
         if b'failure reason' in response:
@@ -54,6 +42,8 @@ class Tracker:
 
         self.interval = response[b'interval']
         self._peers = parse_peers_list(response[b'peers'])
+
+        return self._peers
 
     async def request_peers(self):
         params = {
@@ -80,5 +70,5 @@ class Tracker:
             raise ValueError("Tracker returned an empty answer")
             return
 
-        self.handle_response(resp_data)
+        return self.handle_response(resp_data)
 

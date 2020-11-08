@@ -1,9 +1,5 @@
-
 from math import ceil
 from bitarray import bitarray
-
-from peer import Peer
-
 
 BLOCK_SIZE = 2 ** 14
 
@@ -35,7 +31,8 @@ class PieceInfo:
         blocks = []
         for block_idx in range(self._num_blocks - 1):
             blocks.append(BlockInfo(self._index, BLOCK_SIZE * block_idx, BLOCK_SIZE))
-        blocks.append(BlockInfo(self._index, self._num_blocks, self._length % BLOCK_SIZE))
+        blocks.append(BlockInfo(self._index, (self._num_blocks - 1) * BLOCK_SIZE,\
+                                self._length - BLOCK_SIZE * (self._num_blocks - 1)))
         return blocks
 
     def save_block(self, begin, data):
@@ -51,7 +48,9 @@ class PieceInfo:
         if self._downloaded:
             raise ValueError('The piece is already downloaded')
         self._downloaded = True
-        self._blocks_downloaded = None
+
+    def flush(self):
+        [block.flush() for block in self.blocks]
 
     @property
     def piece_hash(self):

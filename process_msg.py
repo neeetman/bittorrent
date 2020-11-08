@@ -1,10 +1,6 @@
 import struct
-import os
-import bencode
-import requests
 import logging
 import socket
-import netfunc
 
 
 class Peer_state_machine():

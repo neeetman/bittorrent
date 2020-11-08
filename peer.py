@@ -35,19 +35,12 @@ class Peer:
         return cls(host, port)
 
     @property
-    def handshake_msg(self):
-        pstr = b'BitTorrent protocol'
-        reserved = b'\0' * 8
-        return bytes([len(pstr)]) + pstr + reserved
-
-    @property
     def host(self) -> str:
         return self._host
 
     @property
     def port(self) -> int:
         return self._port
-
 
     def __eq__(self, other):
         if not isinstance(other, Peer):

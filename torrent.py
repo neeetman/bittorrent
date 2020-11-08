@@ -1,4 +1,5 @@
 import hashlib
+import os
 
 from time import sleep
 from math import ceil
@@ -15,6 +16,12 @@ def read_torrent_file(torrent_file):
         return bdecode(file.read())
 
 
+def peer_id():
+    pid_str = str(os.getpid())
+    peer_id = "-hk0001-" + pid_str * (20 // len(pid_str))
+    return peer_id[:20]
+
+
 class TorrentInfo:
     """
     Holds all the information from torrent.
@@ -29,6 +36,7 @@ class TorrentInfo:
         self.download_info = download_info
         self._announce_list = announce_list
 
+        self._my_peer_id = peer_id()
         self.paused = False
 
         self.download_dir = download_dir
@@ -49,6 +57,10 @@ class TorrentInfo:
     @property
     def announce_list(self):
         return self._announce_list
+
+    @property
+    def my_peer_id(self):
+        return self._my_peer_id
 
 
 class FileInfo:
@@ -118,11 +130,12 @@ class DownloadInfo:
         self._create_file_tree()
 
         assert piece_hashes
-        self._pieces = [PieceInfo(item, piece_length) for item in piece_hashes[:-1]]
-        last_piece_length = self.total_size - (len(piece_hashes) - 1) * piece_length
-        self._pieces.append(PieceInfo(piece_hashes[-1], last_piece_length))
-
         piece_count = len(piece_hashes)
+        self._pieces = [PieceInfo(index, item, piece_length)\
+                        for index, item in enumerate(piece_hashes[:-1])]
+        last_piece_length = self.total_size - (piece_count - 1) * piece_length
+        self._pieces.append(PieceInfo(piece_count-1, piece_hashes[-1], last_piece_length))
+
         if ceil(self.total_size / piece_length) != piece_count:
             raise ValueError("Invalid count of piece hashes")
 
@@ -230,7 +243,9 @@ class DownloadInfo:
             result += self._pieces[last_piece_index].length - self.piece_length
         return result
 
-
+    @property
+    def file_tree(self):
+        return self._file_tree
 
 
 if __name__ == "__main__":

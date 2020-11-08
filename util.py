@@ -1,7 +1,3 @@
-# util.py
-# A small collection of useful functions
-
-import os
 import asyncio
 from functools import reduce
 
