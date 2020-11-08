@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import struct
+import time
 
 from torrent import TorrentInfo, DownloadInfo
 from tracker import Tracker
@@ -34,6 +35,9 @@ class DownloadSession(object):
         self.torrent = torrent
         self.peer = peer
         self._received_blocks = received_blocks
+
+        self._total_downloaded = 0
+        self._last_download_time = time.time()
 
     @property
     def handshake_msg(self):
@@ -73,5 +77,11 @@ class DownloadSession(object):
 
         # TODO: Receive packets
 
+
+
+    def add_downloaded(self, size: int):
+        """ For speed testing"""
+        self._last_download_time = time.time()
+        self._total_downloaded += size
 
 
