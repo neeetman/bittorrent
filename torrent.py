@@ -239,7 +239,7 @@ class DownloadInfo:
     def bytes_left(self):
         result = (self.piece_count - self.downloaded_piece_count) * self.piece_length
         last_piece_index = self.piece_count - 1
-        if not self._pieces[last_piece_index].downloaded:
+        if not self._pieces[last_piece_index].is_complete:
             result += self._pieces[last_piece_index].length - self.piece_length
         return result
 
