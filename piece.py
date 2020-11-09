@@ -53,6 +53,13 @@ class PieceInfo:
         [block.flush() for block in self.blocks]
 
     @property
+    def data(self) -> bytes:
+        """
+        Returns Piece data
+        """
+        return b''.join([block.data for block in self.blocks])
+
+    @property
     def piece_hash(self):
         return self._piece_hash
 
