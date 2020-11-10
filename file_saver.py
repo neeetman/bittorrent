@@ -7,7 +7,9 @@ from torrent import TorrentInfo, FileInfo
 class FileSaver(object):
     def __init__(self, torrent: TorrentInfo, file: FileInfo, received_blocks_queue):
         self.download_dir = os.path.join(torrent.download_dir, torrent.download_info.suggested_name)
-        self.file_path = self.download_dir + '/' + '/'.join(file.path)
+        self.dir_path = self.download_dir + '/' + '/'.join(file.path[:-2])
+        os.makedirs(self.dir_path, exist_ok=True)
+        self.file_path = self.dir_path + '/' + file.path[-1]
         self.fd = os.open(self.file_path, os.O_RDWR | os.O_CREAT)
         self._received_blocks_queue = received_blocks_queue
         asyncio.ensure_future(self.start())
