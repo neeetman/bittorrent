@@ -186,10 +186,10 @@ class DownloadInfo:
     def _traverse_node(node):
         pass
 
-    def select_files(self, paths):
+    def select_files(self, files):
         segments = []
-        for path in paths:
-            node = self._get_file_tree_node(path)
+        for file in files:
+            node = self._get_file_tree_node(file.path)
             node.selected = True
             segments.append((node.offset, node.length))
         if not segments:
