@@ -1,10 +1,12 @@
 import aiohttp
+import logging
 import urllib.parse as urlparse
 
 from peer import Peer
 from util import slice
 from errors import TrackerError
 from bencode import bdecode
+from torrent import TorrentInfo
 
 
 def parse_peers_list(data):
@@ -26,24 +28,33 @@ class Tracker:
         self._peers         -- The peer list from tracker.
         self._my_peer_id    -- .
     """
-    def __init__(self, torrent):
-        self.tracker_url = torrent.announce_list[0]  ##
+    def __init__(self, torrent: TorrentInfo):
+        self.tracker_url = self._transfer_url_list(torrent.announce_list)
         self._download_info = torrent.download_info
-        self._peers = None
+        self._peers = list()
         self._my_peer_id = torrent.my_peer_id
 
     @property
     def peers(self):
         return self._peers
 
+    @staticmethod
+    def _transfer_url_list(url_list):
+        if isinstance(url_list[0], str):
+            return url_list
+        elif isinstance(url_list[0], list):
+            tmp_list = list()
+            for ls in url_list:
+                tmp_list.extend(ls)
+            return tmp_list
+
     def handle_response(self, response):
         if b'failure reason' in response:
             raise TrackerError(response[b'failure reason'].decode())
 
         self.interval = response[b'interval']
-        self._peers = parse_peers_list(response[b'peers'])
+        self._peers.extend(parse_peers_list(response[b'peers']))
 
-        return self._peers
 
     async def request_peers(self):
         params = {
@@ -56,19 +67,26 @@ class Tracker:
             'compact': 1,
             'envet': 'started',
         }
-        url = self.tracker_url + '?' + urlparse.urlencode(params)
+        for url in self.tracker_url:
+            url = url + '?' + urlparse.urlencode(params)
 
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url) as conn:
-                resp_data = await conn.read()
+            async with aiohttp.ClientSession() as session:
+                async with session.get(url) as conn:
+                    resp_data = await conn.read()
 
-        if conn.status >= 400:
-            raise ValueError("Tracker host cannot reachable")
+            if conn.status >= 400:
+                logging.error("Tracker host cannot reachable: %s " % url)
+                continue
 
-        resp_data = bdecode(resp_data)
-        if not resp_data:
-            raise ValueError("Tracker returned an empty answer")
-            return
+            resp_data = bdecode(resp_data)
+            if not resp_data:
+                logging.error("Tracker returned an empty answer: %s " % url)
+                continue
 
-        return self.handle_response(resp_data)
+            self.handle_response(resp_data)
+
+        assert len(self.peers) > 0
+        return self.peers
+
+
 
