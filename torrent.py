@@ -92,7 +92,7 @@ class FileInfo:
         try:
             path = list(map(bytes.decode, dictionary[b'path']))
         except KeyError:
-            path = []
+            path = [dictionary[b'name'].decode(), ]
 
         return cls(dictionary[b'length'], path, md5sum=dictionary.get(b'md5sum'))
 
